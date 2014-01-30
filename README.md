@@ -24,14 +24,13 @@ Requirements
 - Boost
 - Xerces-C
 - Xalan-C
-- ZipArchive
-- Libtiff
 - pthread
 - **fintp_utils**
 - **fintp_log**
 - **fintp_transport**
 - **fintp_udal**
 - **fintp_base**
+- **fintp_ws**
 
 License
 -------
