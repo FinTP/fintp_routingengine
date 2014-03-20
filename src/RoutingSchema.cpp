@@ -872,7 +872,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 					{
 						DEBUG( "The message [" << correlationId << "] with TRN [" << trn << "] was part of bulk reject, but reactivation not allowed on exitpoint [" << messageTable << "]" );
 						messageTable = job->getJobTable();
-						batchItemFeedback = RoutingMessageEvaluator::FEEDBACKQPI_NOREACT;
+						batchItemFeedback = RoutingMessageEvaluator::FEEDBACKFTP_NOREACT;
 					}
 
 					if( ( batchItemSeq == "1" ) && ( ( messageOptions & RoutingMessageOptions::MO_NOHEADERS ) == RoutingMessageOptions::MO_NOHEADERS ) )
@@ -888,7 +888,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 				
 				// good message in bad batch - > return to sending queue
 				// nack message in batch
-				if ( response->IsNack( trn ) )
+				if ( response->IsNack( trn ) )//!NOSEQFAULT (is bulk nack) always return true
 				{
 					if ( isBulk && ( bulkReactivateQueue.length() > 0 ) && evaluator->checkReactivation() )
 					{
@@ -946,7 +946,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 					if( ( messageOptions & RoutingMessageOptions::MO_MARKNOTREPLIED ) == RoutingMessageOptions::MO_MARKNOTREPLIED )
 					{
 						DEBUG( "The message [" << correlationId << "] with TRN [" << trn << "] was not rejected, but aggregation allowed on exitpoint [" << messageTable << "]" );
-						RoutingAggregationCode aggcode( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, correlationId );
+						RoutingAggregationCode aggcode( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, correlationId );
 						RoutingAggregationManager::AddRequest( evaluator->getAggregationCode( aggcode ) );
 						continue;
 					}
@@ -1654,7 +1654,7 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 			return;
 	}
 	
-	// move from interface
+	// Move from UI
 	if ( job->isMove() )
 	{
 		stringstream actionCommand;
@@ -1715,7 +1715,8 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 		job->copyActions( *redirectJob );
 
 		return;
-	}	
+	}
+	//Reject from UI ?
 	if ( job->isComplete() )
 	{
 		stringstream actionCommand;
@@ -1772,7 +1773,7 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 		
 		return;
 	}
-	
+	// Feedback overide from UI
 	if ( job->hasFunctionParam( RoutingJob::PARAM_FEEDBACK ) )
 	{
 		string uiFeedback = job->getFunctionParam( RoutingJob::PARAM_FEEDBACK );
@@ -1782,7 +1783,7 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 		RoutingAggregationCode uiAggCode = theMessage->getAggregationCode();
 		uiAggCode.Clear();
 		
-		uiAggCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPICODE, uiFeedback );
+		uiAggCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPCODE, uiFeedback );
 		theMessage->setFeedback( uiAggCode );
 	}
 
@@ -1814,7 +1815,7 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 		{
 			DEBUG( "Changing batchid for autobatch message" );
 			// change batchid in feedbackagg, so that we can match replies on batchid 
-			RoutingAggregationCode batchIdCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, theMessage->getCorrelationId() );
+			RoutingAggregationCode batchIdCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, theMessage->getCorrelationId() );
 			batchIdCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHID, theMessage->getBatchId() );
 			RoutingAggregationManager::AddRequest( batchIdCode, RoutingAggregationManager::UpdateOrFail );
 
@@ -1947,14 +1948,14 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 			//RoutingDbOp::RemoveBatchMessages( theMessage->getBatchId(), theMessage->getTableName() );
 
 			// rely on this : the message was put to mq and it has 
-			/*if ( theMessage->getFeedback().getCorrelToken() != RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQID )
+			/*if ( theMessage->getFeedback().getCorrelToken() != RoutingMessageEvaluator::AGGREGATIONTOKEN_MQID )
 				throw logic_error( "Unable to obtain WMQID from message feedback" );
 
-			string wmqid = Base64::encode( theMessage->getFeedback().getCorrelId() );
+			string mqid = Base64::encode( theMessage->getFeedback().getCorrelId() );
 
 			// set output session, wmqid for all messagess within the assembly
 			RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHID, theMessage->getBatchId() );
-			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQID, wmqid );
+			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_MQID, mqid );
 			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_OSESSION, theMessage->getOutputSession() );
 
 			// optimistic update( we know the messages are in there ;) )

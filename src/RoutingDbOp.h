@@ -129,7 +129,7 @@ class ExportedTestObject RoutingDbOp
 		static DataSet* GetBatchMessages( const string& batchId, const string& tableName, const string& spName = "GetMessagesInAssembly" );
 		static DataSet* GetBatchPart( const string& userId, const string& receiver, const int serviceId, const string& queue );
 		static void RemoveBatchMessages( const string& batchId, const string& tableName, const string& spName = "DeleteMessagesInAssembly" );
-		static void UpdateOriginalBatchMessages( const string& batchid, const string& code = RoutingMessageEvaluator::FEEDBACKQPI_REFUSE );
+		static void UpdateOriginalBatchMessages( const string& batchid, const string& code = RoutingMessageEvaluator::FEEDBACKFTP_REFUSE );
 		static string GetBatchType( const string& batchId, const string& tableName = "BATCHJOBS", const string& sender = "" );
 		static void InsertIncomingBatch( const string& batchId, const string& messageId, const string& messageNamespace );
 		static string GetOriginalRef( const string& reference, const string& batchId );

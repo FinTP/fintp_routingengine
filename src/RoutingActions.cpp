@@ -330,7 +330,8 @@ void RoutingAction::internalPerformSendReply( RoutingMessage* message, const str
 
 			// set Feedback ( this message will not be reevaluated )
 			// if the correltoken is qpi ( message rejected by user or rejected in ACH )
-			if ( message->getFeedback().getCorrelToken() != RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID )
+			// only if the agg code contains something else
+			if ( message->getFeedback().getCorrelToken() != RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID )
 			{
 				DEBUG( "Setting aggregation code for non-QPI message" );
 				if( aggCode.Size() > 0 )
@@ -415,9 +416,10 @@ void RoutingAction::internalPerformSendReply( RoutingMessage* message, const str
 
 			//read rref, and mur from bm, and update feedbackagg tfdcode of the orig message if msg type approved
 			/*if( ( aggCode.containsAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_TFDCODE ) ) &&
-				( aggCode.getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_TFDCODE ) == RoutingMessageEvaluator::FEEDBACKQPI_APPROVE ) )
+				( aggCode.getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_TFDCODE ) == RoutingMessageEvaluator::FEEDBACKFTP_APPROVE ) )
 				RoutingAggregationManager::UpdataAggregationField( newRequest );
 			*/
+			// aggregate refusal
 			if( message->getPayloadEvaluator() != NULL )
 			{
 				if( message->getPayloadEvaluator()->updateRelatedMessages() )
@@ -496,7 +498,7 @@ void RoutingAction::internalPerformComplete( RoutingMessage* message ) const
 		RoutingAggregationCode aggCode = message->getAggregationCode();
 		aggCode.Clear();
 		
-		aggCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPICODE, m_Param );
+		aggCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPCODE, m_Param );
 		
 		message->setFeedback( aggCode );
 
@@ -653,14 +655,14 @@ void RoutingAction::internalPerformAggregate( RoutingMessage* message, const boo
 		}
 
 		// if this message is not a reject (reject=qPI reject?)
-		if ( feedback.getCorrelToken() != RoutingMessageEvaluator::AGGREGATIONTOKEN_QPICODE )
+		if ( feedback.getCorrelToken() != RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPCODE )
 		{
 			// find out original message correlationid and original requestor
 			RoutingAggregationCode newRequest( reply );
 			// clear fields
 			newRequest.Clear();
 	
-			newRequest.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, "" );
+			newRequest.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, "" );
 			newRequest.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_REQUESTOR, "" );
 			newRequest.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_OSESSION, "" );
 			
@@ -674,7 +676,7 @@ void RoutingAction::internalPerformAggregate( RoutingMessage* message, const boo
 				needsTrim = RoutingAggregationManager::GetAggregationFields( newRequest );
 
 				RoutingAggregationFieldArray fields = newRequest.getFields();
-				origCorrelationId = fields[ RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID ];
+				origCorrelationId = fields[ RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID ];
 				DEBUG( "Acquired CorrelationId of the original message [" << origCorrelationId << "]" );
 			
 				origRequestor = fields[ RoutingMessageEvaluator::AGGREGATIONTOKEN_REQUESTOR ];
@@ -1060,7 +1062,7 @@ void RoutingAction::internalPerformReactivate( RoutingMessage *message, const st
 		
 	DEBUG( "Obtaining business data about original message with correlation id [" << correlationId << "]" );
 	
-	RoutingAggregationCode aggregationCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, correlationId );
+	RoutingAggregationCode aggregationCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, correlationId );
 	aggregationCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_PAYLOAD, "" );
 	aggregationCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHID, "" );
 	aggregationCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_REQUESTOR, "" );
@@ -1107,7 +1109,7 @@ void RoutingAction::internalPerformReactivate( RoutingMessage* message, const st
 		
 	DEBUG( "Obtaining business data about original message with correlation id [" << correlationId << "]" );
 	
-	RoutingAggregationCode aggregationCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, correlationId );
+	RoutingAggregationCode aggregationCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, correlationId );
 	aggregationCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_PAYLOAD, "" );
 	aggregationCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHID, "" );
 	aggregationCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_REQUESTOR, "" );
@@ -1176,7 +1178,7 @@ void RoutingAction::internalPerformChangeValueDate( RoutingMessage* message ) co
 	RoutingDbOp::UpdateBusinessMessageValueDate( message->getCorrelationId(), TimeUtil::Get( "%y%m%d", 6 ) );
 
 	// update feedbackagg payload 
-	RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, message->getCorrelationId() );
+	RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, message->getCorrelationId() );
 	request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_PAYLOAD, message->getPayload()->getText( RoutingMessagePayload::AUTO ) );
 	
 	// optimistic update( we know the message is in there ;) )
@@ -1417,7 +1419,7 @@ void RoutingAction::internalPerformDisassemble( RoutingMessage* message ) const
 				*batchManager >> item;
 
 				// update feedback batchid, payload, seq
-				request.setCorrelToken( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID );
+				request.setCorrelToken( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID );
 				request.setAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHID, item.getBatchId() );
 				request.setAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHSEQ, StringUtil::ToString( item.getSequence() ) );
 				request.setAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_PAYLOAD, item.getPayload() );
@@ -1725,7 +1727,7 @@ void EnrichTemplate::enrich( RoutingMessage* message )
 	}  
 
 	// update new payload to qPI
-	RoutingAggregationCode payloadCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, message->getCorrelationId() );
+	RoutingAggregationCode payloadCode( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, message->getCorrelationId() );
 	payloadCode.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_PAYLOAD, message->getPayload()->getTextConst() );
 	RoutingAggregationManager::AddRequest( payloadCode, RoutingAggregationManager::OptimisticUpdate );
 	

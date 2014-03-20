@@ -761,7 +761,7 @@ void RoutingMessage::setFeedback( const string& feedback )
 				
 			// HACK for Adi... ( old RTGS connector not setting W| in feedback )
 			if ( firstPart.length() == 32 )
-				evalProvider = RoutingMessageEvaluator::FEEDBACKPROVIDER_WMQ;
+				evalProvider = RoutingMessageEvaluator::FEEDBACKPROVIDER_MQ;
 			else
 				evalProvider = RoutingMessageEvaluator::FEEDBACKPROVIDER_UNK;	
 				
@@ -827,7 +827,7 @@ RoutingAggregationCode RoutingMessage::getAggregationCode()
 	if ( evaluator == NULL )
 	{
 		// if we already have a response
-		RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, getCorrelationId() );
+		RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, getCorrelationId() );
 		return request;
 	}
 	
@@ -839,7 +839,7 @@ RoutingAggregationCode RoutingMessage::getAggregationCode()
 	// aggregate some fields if this is not a reply
 	if ( !isReply() )
 	{
-		request.setCorrelToken( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID );
+		request.setCorrelToken( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID );
 		request.setCorrelId( getCorrelationId() );
 		RoutingMessagePayload* crtPayload = getPayload();
 		if ( crtPayload != NULL )
@@ -903,16 +903,16 @@ bool RoutingMessage::isReply()
 		string feedbackcode = getFeedback().getAggregationField( 0 );
 
 		// not an incoming message
-		return ( feedbackcode != RoutingMessageEvaluator::FEEDBACKQPI_MSG );
+		return ( feedbackcode != RoutingMessageEvaluator::FEEDBACKFTP_MSG );
 	}
 
 	string correlToken = getFeedback().getCorrelToken();
 	
-	// one more chance for this to be an ack : WMQfeedback != 0 && WMQfeedback != FEEDBACKQPI_MSG
-	if ( correlToken == RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQID )
+	// one more chance for this to be an ack : MQfeedback != 0 && MQfeedback != FEEDBACKFTP_MSG
+	if ( correlToken == RoutingMessageEvaluator::AGGREGATIONTOKEN_MQID )
 	{
-		string wmqCode = getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQCODE );
-		return ( ( wmqCode != "0" ) && ( wmqCode != RoutingMessageEvaluator::FEEDBACKQPI_MSG ) );
+		string mqCode = getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_MQCODE );
+		return ( ( mqCode != "0" ) && ( mqCode != RoutingMessageEvaluator::FEEDBACKFTP_MSG ) );
 	}
 	
 	return false;
@@ -939,20 +939,20 @@ bool RoutingMessage::isAck()
 		string feedbackcode = getFeedback().getAggregationField( 0 );
 
 		//not a received message, not an ack !!! the processing function must
-		// override feedback to FEEDBACKQPI_MSG before setting it fastpath
-		return ( feedbackcode == RoutingMessageEvaluator::FEEDBACKQPI_ACK );
+		// override feedback to FEEDBACKFTP_MSG before setting it fastpath
+		return ( feedbackcode == RoutingMessageEvaluator::FEEDBACKFTP_ACK );
 	}
 
 	// if the message is fastpath, for TFD replies we have an WMQID correlation token
 	// one more chance for this to be an ack : WMQfeedback == 275
-	if ( getFeedback().getCorrelToken() == RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQID )
+	if ( getFeedback().getCorrelToken() == RoutingMessageEvaluator::AGGREGATIONTOKEN_MQID )
 	{
-		return ( getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQCODE ) == "275" );
+		return ( getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_MQCODE ) == "275" );
 	}
 
-	// one more chance for this to be an ack : QPI feedback == RoutingMessageEvaluator::FEEDBACKQPI_ACK
+	// one more chance for this to be an ack : QPI feedback == RoutingMessageEvaluator::FEEDBACKFTP_ACK
 	string qpicode = getFeedback().getAggregationField( 0 );
-	if ( qpicode == RoutingMessageEvaluator::FEEDBACKQPI_ACK )
+	if ( qpicode == RoutingMessageEvaluator::FEEDBACKFTP_ACK )
 		return true;
 
 	return false;
@@ -971,26 +971,26 @@ bool RoutingMessage::isNack()
 		string feedbackcode = getFeedback().getAggregationField( 0 );
 
 		//not a received message, not an ack !!! the processing function must
-		// override feedback to FEEDBACKQPI_MSG before setting it fastpath
-		return ( ( feedbackcode != RoutingMessageEvaluator::FEEDBACKQPI_MSG ) && ( feedbackcode != RoutingMessageEvaluator::FEEDBACKQPI_ACK ) );
+		// override feedback to FEEDBACKFTP_MSG before setting it fastpath
+		return ( ( feedbackcode != RoutingMessageEvaluator::FEEDBACKFTP_MSG ) && ( feedbackcode != RoutingMessageEvaluator::FEEDBACKFTP_ACK ) );
 	}
 
 	// one more chance for this to be a nack : WMQfeedback != 275|0
-	if ( getFeedback().getCorrelToken() == RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQID )
+	if ( getFeedback().getCorrelToken() == RoutingMessageEvaluator::AGGREGATIONTOKEN_MQID )
 	{
-		string wmqfeedback = getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQCODE );
+		string mqfeedback = getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_MQCODE );
 	
-		if( ( wmqfeedback == "275" ) || ( wmqfeedback == "0" ) || ( wmqfeedback == RoutingMessageEvaluator::FEEDBACKQPI_MSG ) )
+		if( ( mqfeedback == "275" ) || ( mqfeedback == "0" ) || ( mqfeedback == RoutingMessageEvaluator::FEEDBACKFTP_MSG ) )
 			return false;
 			
 		return true;
 	}
 
-	// one more chance for this to be a nack : QPI feedback == RoutingMessageEvaluator::FEEDBACKQPI_RJCT|RoutingMessageEvaluator::FEEDBACKQPI_LATERJCT
+	// one more chance for this to be a nack : QPI feedback == RoutingMessageEvaluator::FEEDBACKFTP_RJCT|RoutingMessageEvaluator::FEEDBACKFTP_LATERJCT
 	try
 	{
-		string qpicode = getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPICODE );
-		if ( ( qpicode == RoutingMessageEvaluator::FEEDBACKQPI_RJCT ) || ( qpicode == RoutingMessageEvaluator::FEEDBACKQPI_LATERJCT ) )
+		string qpicode = getFeedback().getAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPCODE );
+		if ( ( qpicode == RoutingMessageEvaluator::FEEDBACKFTP_RJCT ) || ( qpicode == RoutingMessageEvaluator::FEEDBACKFTP_LATERJCT ) )
 			return true;
 	}
 	catch( ... )
@@ -1070,7 +1070,7 @@ RoutingMessageEvaluator* RoutingMessage::getPayloadEvaluator( const bool forceRe
 			DEBUG( "evalFeedback = [" << evalFeedback << "]" );
 			RoutingMessageEvaluator::FeedbackProvider evalFeedbackProvider = m_PayloadEvaluator->getOverrideFeedbackProvider();
 			
-			// if feeback is overriden by evaluator ( ex : tfd 012 -> RoutingMessageEvaluator::FEEDBACKQPI_ACK )
+			// if feeback is overriden by evaluator ( ex : tfd 012 -> RoutingMessageEvaluator::FEEDBACKFTP_ACK )
 			if ( evalFeedback.length() > 0 ) 
 			{
 				// correlId, errorCode, feedbackProvider )

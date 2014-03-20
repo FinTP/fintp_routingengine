@@ -224,31 +224,20 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& 
 	if ( isBatch )
 	{
 		DEBUG( "Using batch manager to process messages" );
-		
-		//DEBUG( "Before creating bm" );
-		//RoutingEngine::getMessagePool().Dump();
-		
+
 		if ( m_BatchManager == NULL )
 		{
 			DEBUG( "Creating a new batch manager" );
-			m_BatchManager = new BatchManager< BatchMQStorage >( BatchManagerBase::WMQ, BatchResolution::SYNCHRONOUS );
-		}
-		
-		//DEBUG( "After creating bm" );
-		//RoutingEngine::getMessagePool().Dump();
-		
-		batchManager = m_BatchManager;//;dynamic_cast< BatchManager<BatchMQStorage>* >( m_BatchManager );
+			m_BatchManager = new BatchManager< BatchMQStorage >( BatchManagerBase::MQ, BatchResolution::SYNCHRONOUS );
 
-		//DEBUG( "After dyna cast" );
-		//RoutingEngine::getMessagePool().Dump();
-		
-		batchManager->storage().setQueue( m_Queue );
-		batchManager->storage().setQueueManager( m_QueueManager );
-		batchManager->storage().setTransportURI( m_TransportURI );
-		
-		//DEBUG( "Before opening batch" );
-		//RoutingEngine::getMessagePool().Dump();
-	
+			m_BatchManager->storage().initialize( m_HelperType );
+			m_BatchManager->storage().setQueue( m_Queue );
+			m_BatchManager->storage().setQueueManager( m_QueueManager );
+			m_BatchManager->storage().setTransportURI( m_TransportURI );		
+		}
+
+		batchManager = m_BatchManager;
+
 		batchManager->open( message->getBatchId(), ios_base::out );
 	}
 	else
@@ -411,7 +400,7 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& 
 		
 		// set mq id for request
 		// breaking change : if the request type is batch, set batchid as aggregation token
-		RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, message->getCorrelationId() );
+		RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, message->getCorrelationId() );
 		RoutingAggregationManager::REQUEST_MODE requestMode = RoutingAggregationManager::OptimisticUpdate;
 
 		if ( message->getRequestType() == RoutingMessage::Batch )
@@ -473,7 +462,7 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& 
 
 			if ( batchManager == NULL )
 				throw logic_error( "Batch manager is NULL" );
-			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQID, batchManager->getResolution().getItem().getMessageId() );
+			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_MQID, batchManager->getResolution().getItem().getMessageId() );
 			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHID, batchManager->getResolution().getItem().getBatchId() );
 			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHSEQ, StringUtil::ToString( batchManager->getResolution().getItem().getSequence() ) );
 		}
@@ -485,7 +474,7 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& 
 				m_TransportHelper->putOne( ( unsigned char* )messageText.data(), messageText.size() );
 			else
 				m_TransportHelper->putOneRequest( ( unsigned char* )messageText.data(), messageText.size(), m_ReplyToQueue, m_QueueManager, m_ReplyOptions );
-			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_WMQID, m_TransportHelper->getLastMessageId() );
+			request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_MQID, m_TransportHelper->getLastMessageId() );
 		}
 		
 		request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_OSESSION, message->getOutputSession() );
@@ -602,7 +591,7 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const string& user
 						string correlationId = StringUtil::Trim( batchItems->getCellValue( i, "QPIID" )->getString() );
 
 						// set mq id for request
-						RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_QPIID, correlationId );
+						RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, correlationId );
 						
 						request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHID,  message->getBatchId() );
 						//request.addAggregationField( RoutingMessageEvaluator::AGGREGATIONTOKEN_BATCHSEQ, StringUtil::ToString( batchManager->getResolution().getItem().getSequence() ) );
@@ -954,7 +943,7 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const string& user
 					string feedbackcode = message->getFeedback().getAggregationField( 0 );
 
 					// incoming message being sent to a queue
-					incomingMessage = ( feedbackcode == RoutingMessageEvaluator::FEEDBACKQPI_MSG );
+					incomingMessage = ( feedbackcode == RoutingMessageEvaluator::FEEDBACKFTP_MSG );
 				}
 				catch( ... )
 				{

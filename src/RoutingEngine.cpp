@@ -193,7 +193,7 @@ void RoutingEngine::Start( bool startWatcher )
 	m_LiquiditiesHasIBANPL = true;
 	m_LiquiditiesHasCorresps = true;
 
-	m_BatchXSLT = "SwiftToACH.xslt";
+	m_BatchXSLT.insert( pair< string, string >( DEFAULT_QUEUE, "SwiftToACH.xslt" ) );
 
 	RoutingAction::CreateXSLTFilter();
 
@@ -310,6 +310,7 @@ void RoutingEngine::Start( bool startWatcher )
 	// read application settings
 	ReadApplicationSettings();
 
+	RoutingMessageEvaluator::setGetBatchTypeFunction( &RoutingDbOp::GetBatchType );
 	RoutingMessageEvaluator::ReadEvaluators( GlobalSettings["PluginLocation"]  );
 
 	// Load services to check for duplicates
@@ -1438,6 +1439,17 @@ void RoutingEngine::ReadApplicationSettings()
 	}
 	DEBUG( "[Business Rules] TFD ACK method set to [" << RoutingMessageEvaluator::getTFDACKMethod() << "]" );		
 
+
+	//mark approved replies messages
+	if( GlobalSettings.getSettings().ContainsKey( "TFDACHApproved" ) )
+	{
+		DEBUG( "[Business Rules] TFD ACH reply process is set to mark approved messages" );
+		RoutingMessageEvaluator::setMarkApproved( GlobalSettings[ "TFDACHApproved" ] == "true" );
+	}
+	else
+	{
+		DEBUG( "TFDACKMethod setting not found in config. Using default value [ignore approved messages]." );
+	}
 
 	// get parallel job limit
 	if( GlobalSettings.getSettings().ContainsKey( "ParallelJobThreads" ) )
