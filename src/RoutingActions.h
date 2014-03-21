@@ -62,6 +62,7 @@ class ExportedTestObject RoutingAction
 
 			ASSEMBLE,
 			DISASSEMBLE,
+			ENRICH,
 
 			HOLDQUEUE,
 			RELEASEQUEUE,

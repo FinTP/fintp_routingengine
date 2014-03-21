@@ -118,9 +118,13 @@ class ExportedTestObject RoutingMessageOptions
 			 */
 			MO_INSERTBATCH = 256,
 			/**
-			 *Option set on exit point that support correlation of good messages rejected batch reply
+			 * Option set on exit point that support correlation of good messages rejected batch reply
 			*/
-			MO_MARKNOTREPLIED = 512
+			MO_MARKNOTREPLIED = 512,
+			/**
+			 * Option set on exitpoint so that RE send out MT_REPLY as MT_DATAGRAM wmq messages
+			*/
+			MO_REPLYDATAGRAM = 1024
 		} MESSAGE_OPTIONS;
 			
 		RoutingMessageOptions( const string& options ){ m_Options = Parse( options ); }

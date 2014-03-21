@@ -86,6 +86,13 @@ class ExportedTestObject RoutingSchema
 
 		void ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, RoutingMessage ( *messageProviderCallback )() = NULL, bool fastpath  = false );
 		void ApplyRouting( RoutingJob* job, RoutingMessage( *messageProviderCallback )() = NULL, bool fastpath = false );
+		/*
+		 * Process batch messages
+		 * 1. Batch acks with/no transaction
+		 * 2. Batch nacks with/no transactions
+		 * 3. Batch not acks/ not nacks
+		 * Constraint every ack/nack batch with no transactions should have a not NULL SequenceResponse
+		 */
 		bool RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage, bool fastpath = false );
 		bool RouteBatch( RoutingJob* job, RoutingMessage* theMessage, bool fastpath = false );
 		

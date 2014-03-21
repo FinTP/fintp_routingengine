@@ -372,7 +372,6 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& 
 	// should be set for MT104 messages ( or other batched made in BO )
 	bool skipSequence = ( ( m_MessageOptions & RoutingMessageOptions::MO_NOSEQ ) == RoutingMessageOptions::MO_NOSEQ );
 
-	// if reply options set for queue, send a request, else send a datagram/reply
 	if ( isReply )
 	{
 		// we could put the reply to mq, but it will break the batch... 
@@ -389,11 +388,16 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& 
 			m_TransportHelper->openQueue( m_Queue );
 		}
 		
-		if ( message->isAck() )
+		bool replyDatagram =  ( ( m_MessageOptions & RoutingMessageOptions::MO_REPLYDATAGRAM ) == RoutingMessageOptions::MO_REPLYDATAGRAM );
+
+		if ( replyDatagram )
+			m_TransportHelper->putOne( ( unsigned char* )messageText.data(), messageText.size() );
+		else if ( message->isAck() )
 			m_TransportHelper->putOneReply( ( unsigned char* )messageText.data(), messageText.size() ); //MQFB_PAN?
 		else
 			m_TransportHelper->putOneReply( ( unsigned char* )messageText.data(), messageText.size() ); //MQFB_NAN?
 	}
+	// if reply options set for queue, send a request, else send a datagram/reply
 	else
 	{
 		DEBUG( "The message will be sent as [" << ( isBatch ? "part of batch" : "single message" ) << "] to the WMQ queue" );

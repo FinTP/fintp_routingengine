@@ -1133,7 +1133,10 @@ int RoutingMessageOptions::Parse( const string& options )
 			returnedOptions |= MO_INSERTBATCH;
 				
 		if ( crtToken == "MO_MARKNOTREPLIED" )
-					returnedOptions |= MO_MARKNOTREPLIED;
+			returnedOptions |= MO_MARKNOTREPLIED;
+
+		if ( crtToken == "MO_REPLYDATAGRAM" )
+			returnedOptions |= MO_REPLYDATAGRAM;
 		crtToken = myOptions.NextToken();		
 	}
 	

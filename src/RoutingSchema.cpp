@@ -703,37 +703,32 @@ void RoutingSchema::UsePlan( const string& name )
 bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage, bool fastpath )
 {
 	pthread_t selfId = pthread_self();
+	string bulkReactivateQueue = RoutingEngine::getBulkReactivateQueue();
+
 	bool isBulk = false;
-	RoutingMessageEvaluator* evaluator = theMessage->getPayloadEvaluator();
-	string userId = job->getUserId();
-	wsrm::SequenceResponse* response = evaluator->getSequenceResponse();
 	bool needsIndividualAttn = false;
-	string batchIssuer = evaluator->getIssuer();
+	bool isDistinctAck = false;
+	string userId = job->getUserId();
 	string messageTable = job->getJobTable();
 	string itemFeedback = "";
 	string fullBatchId = "";
-	string bulkReactivateQueue = RoutingEngine::getBulkReactivateQueue();
+	RoutingMessageEvaluator* evaluator = theMessage->getPayloadEvaluator();
+	if ( evaluator == NULL )
+		throw logic_error( "Routing batch reply:[ Batch reply can't be evaluated" );
+	string batchIssuer = evaluator->getIssuer();
 	RoutingMessageEvaluator::FeedbackProvider feedbackProvider = ( evaluator->getOverrideFeedbackProvider() );
-	bool isDistinctAck = false;
+	wsrm::SequenceResponse* response = evaluator->getSequenceResponse();
+
 	NameValueCollection params;
-	//bulk replies evaluated but not decideble as ack or nack
-	if ( response != NULL )
-		fullBatchId = response->getIdentifier();
-	
-	// we deal with not decideble bulk reply
-	if ( response == NULL )
-	{
-		isBulk = true;
-		itemFeedback = evaluator->getOverrideFeedback();
-		DEBUG( "A batch reply [" << evaluator->getNamespace() << "] was received. Batch reply should be completed... " );
-	}
+
 	//optimistic treatment for nacks( suppose we can perform a bulk reactivation of nacks )
-	else if ( evaluator->isNack() )
+	if ( evaluator->isNack() )
 	{
 		// failed batches with all messages rejected will have seqfault != NOSEQFAULT
 		wsrm::SequenceFault* nackResp = dynamic_cast< wsrm::SequenceFault* >( response );
 		if ( nackResp == NULL )
 			throw logic_error( "Response sequence is not nack sequence" );
+		fullBatchId = response->getIdentifier();
 		itemFeedback = nackResp->getErrorCode();
 		if ( itemFeedback != wsrm::SequenceFault::NOSEQFAULT )
 		{
@@ -756,10 +751,10 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 	{
 		// comentariu irelevant ? : sequence response for for DI SETTLED BlkAcc with transactions inside
 		wsrm::SequenceAcknowledgement* ackResp = dynamic_cast< wsrm::SequenceAcknowledgement* >( response );
-		itemFeedback = evaluator->getOverrideFeedback();
 		if ( ackResp == NULL )
 			throw logic_error( "Response sequence is not ack sequence" );
-			
+		fullBatchId = response->getIdentifier();
+		itemFeedback = evaluator->getOverrideFeedback();
 		if ( ackResp->HasAcks() )
 		{
 			needsIndividualAttn = true;
@@ -774,18 +769,20 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 			DEBUG( "The batch [" << fullBatchId << "] was ACKed. Bulk reply will be performed... " );
 		}
 	}
-	//optimistic treatment for acks( suppose we can perform a bulk reactivation of acks )
+	//optimistic treatment for all batch reply neither isAck neither isNack
 	else
 	{
 		isBulk = true;
 		itemFeedback = evaluator->getOverrideFeedback();
-		DEBUG( "The batch [" << fullBatchId << "] was ACKed. Bulk reply will be performed... " );
+		DEBUG( "A batch reply [" << evaluator->getNamespace() << "] was received. Batch reply should be completed... " );
 	}
 
 	// we dealt with bulk reply
 	if ( !needsIndividualAttn )
 	{
-		//#pragma region Deal with batch reply
+		if ( response == NULL )
+				throw logic_error( "Batch reply message should have a sequence response" );
+		fullBatchId = response->getIdentifier();
 		theMessage->setBatchId( fullBatchId );
 
 		// set agg token to be the batch id, in effect, the call to update feedbackagg will be
@@ -870,7 +867,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 					DEBUG( "Queue [" << messageTable << "] options : " << RoutingMessageOptions::ToString( messageOptions ) );
 					if( ( messageOptions & RoutingMessageOptions::MO_NOREACTIVATE ) == RoutingMessageOptions::MO_NOREACTIVATE )
 					{
-						DEBUG( "The message [" << correlationId << "] with TRN [" << trn << "] was part of bulk reject, but reactivation not allowed on exitpoint [" << messageTable << "]" );
+						DEBUG( "The message [" << correlationId << "] with TRN [" << trn << "] was part of bulk reply, but reactivation not allowed on exitpoint [" << messageTable << "]" );
 						messageTable = job->getJobTable();
 						batchItemFeedback = RoutingMessageEvaluator::FEEDBACKFTP_NOREACT;
 					}
@@ -926,7 +923,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 					else
 					{
 						if ( evaluator->isBusinessFormat() )
-							batchItemFeedback = "-1";
+							continue;
 					}
 					/*
 						else

@@ -34,12 +34,13 @@
 #include "RoutingDbOp.h"
 
 XSLTFilter *RoutingAction::m_XSLTFilter = NULL;
-const int EnrichTemplate::m_EnrichFields[ENRICHFIELDSCOUNT] = { InternalXmlPayload::SENDER, InternalXmlPayload::RECEIVER, InternalXmlPayload::CURRENCY, InternalXmlPayload::AMOUNT,
+const int EnrichTemplate::m_EnrichFields[ENRICHFIELDSCOUNT] = { InternalXmlPayload::SENDER, InternalXmlPayload::RECEIVER, InternalXmlPayload::CURRENCY,
 									InternalXmlPayload::VALUEDATE, InternalXmlPayload::IBAN, InternalXmlPayload::IBANPL,
-									InternalXmlPayload::SENDERCORR, InternalXmlPayload::RECEIVERCORR, InternalXmlPayload::ORGINSTRID									};
+									InternalXmlPayload::SENDERCORR, InternalXmlPayload::RECEIVERCORR, InternalXmlPayload::ORGINSTRID
+									};
 
-const string EnrichTemplate::m_EnrichFieldsName[ENRICHFIELDSCOUNT] = { "SENDER", "RECEIVER", "CURRENCY", "AMOUNT", "CURRENCYDATE", "IBAN", "IBANPL", "SENDERCORRESP", 
-								"RECEIVERCORRESP", "ORGINSTRID"};
+const string EnrichTemplate::m_EnrichFieldsName[ENRICHFIELDSCOUNT] = { "SENDER", "RECEIVER", "CURRENCY", "CURRENCYDATE", "IBAN", "IBANPL", "SENDERCORRESP",
+								"RECEIVERCORRESP", "ORGINSTRID" };
 
 //RoutingAction implementation
 string RoutingAction::ToString() const 
@@ -77,6 +78,8 @@ string RoutingAction::ToString( ROUTING_ACTION action )
 			return "Assemble";
 		case RoutingAction::DISASSEMBLE :
 			return "Disassemble";
+		case RoutingAction::ENRICH :
+			return "Enrich";
 		case RoutingAction::WAITON :
 			return "WaitOn";
 			
@@ -135,6 +138,9 @@ RoutingAction::ROUTING_ACTION RoutingAction::Parse( const string& action )
 
 	if( action == "Disassemble" )
 		return RoutingAction::DISASSEMBLE;
+
+	if( action == "Enrich" )
+		return RoutingAction::ENRICH;
 
 	if( action == "WaitOn" )
 		return RoutingAction::WAITON;
@@ -251,6 +257,10 @@ string RoutingAction::Perform( RoutingMessage* message, const string& userId, bo
 
 		case RoutingAction::AGGREGATE :
 			internalAggregateBMInfo( message );
+			break;
+
+		case RoutingAction::ENRICH :
+			internalPerformEnrichMessage( message );
 			break;
 
 		default :
