@@ -36,7 +36,8 @@ class ExportedTestObject RoutingJob
 		long m_BackoutCount;
 		long m_DeferedQueue;
 		
-		string m_JobId, m_RoutingPoint, m_Function, m_UserId, m_BatchId, m_BatchType;
+		string m_JobId, m_RoutingPoint, m_Function, m_BatchId, m_BatchType;
+		int m_UserId;
 
 		bool m_IsBatch, m_IsParallel;
 		BatchManagerBase::BATCH_STATUS m_BatchStatus;
@@ -62,7 +63,7 @@ class ExportedTestObject RoutingJob
 		static const string PARAM_GROUPAMOUNT;
 
 		RoutingJob();		
-		RoutingJob( const string& table, const string& jobId, const string& function, const string& userId );		
+		RoutingJob( const string& table, const string& jobId, const string& function, const int userId );		
 		RoutingJob( const string& jobId );
 
 		~RoutingJob();
@@ -76,7 +77,7 @@ class ExportedTestObject RoutingJob
 		bool isParallel() const { return m_IsParallel; }
 		void setParallel( const bool value = true ) { m_IsParallel = value; }
 
-		string getUserId() const { return m_UserId; }
+		int getUserId() const { return m_UserId; }
 
 		bool isBatch() const { return m_IsBatch; }
 		string getBatchId() const { return m_BatchId; }

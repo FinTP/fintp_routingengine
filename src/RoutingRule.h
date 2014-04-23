@@ -60,7 +60,7 @@ class ExportedTestObject RoutingRule
 		const vector< RoutingCondition >& getConditions() const { return m_Conditions; }
 		
 		//returns true if the rule was performed
-		RoutingAction::ROUTING_ACTION Route( RoutingMessage* message, string userId, bool bulk = false ) const;
+		RoutingAction::ROUTING_ACTION Route( RoutingMessage* message, const int userId, bool bulk = false ) const;
 
 		string getOutcome() const { return m_Outcome; }
 };

@@ -195,7 +195,7 @@ void RoutingAction::setText( const string& text )
 	}
 }
 
-string RoutingAction::Perform( RoutingMessage* message, const string& userId, bool bulk ) const
+string RoutingAction::Perform( RoutingMessage* message, const int userId, bool bulk ) const
 {
 	switch( m_Action )
 	{
@@ -274,7 +274,7 @@ string RoutingAction::Perform( RoutingMessage* message, const string& userId, bo
 		actionPerformed << "with param [" << m_Param << "] ";
 
 	actionPerformed << "successfully performed";
-	if ( userId.length() > 0 )
+	if ( userId > 0 )
 		actionPerformed << " on behalf of user " << userId;
 
 	actionPerformed << ". Queue is [" << message->getTableName() << "]";

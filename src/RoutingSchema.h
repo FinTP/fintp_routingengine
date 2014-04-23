@@ -81,8 +81,8 @@ class ExportedTestObject RoutingSchema
 		void Explain( void );
 		void DisplayPlan( RoutingPlan* plan, unsigned int level );
 	
-		bool ApplyPlanRouting( RoutingJob* job, RoutingMessage* theMessage, const RoutingPlan* plan, const string& userId, const bool isBulk, const bool fastpath = false ) const;
-		bool ApplyQueueRouting( RoutingJob* job, RoutingMessage* theMessage, const long queueId, const string& userId, const bool isBulk, const bool fastpath = false );
+		bool ApplyPlanRouting( RoutingJob* job, RoutingMessage* theMessage, const RoutingPlan* plan, const int userId, const bool isBulk, const bool fastpath = false ) const;
+		bool ApplyQueueRouting( RoutingJob* job, RoutingMessage* theMessage, const long queueId, const int userId, const bool isBulk, const bool fastpath = false );
 
 		void ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, RoutingMessage ( *messageProviderCallback )() = NULL, bool fastpath  = false );
 		void ApplyRouting( RoutingJob* job, RoutingMessage( *messageProviderCallback )() = NULL, bool fastpath = false );

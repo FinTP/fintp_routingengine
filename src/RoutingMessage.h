@@ -246,7 +246,7 @@ class ExportedTestObject RoutingMessage
 		void setPriority( const unsigned long value ) { m_Priority = value; }
 		
 		string getUserId() const { return m_UserId; }
-		void setUserId( const string& userId ) { m_UserId = userId; }
+		void setUserId( const int userId ) { m_UserId = userId; }
 		
 		void setCorrelationId( const string& correlationId ) { m_CorrelationId = correlationId; }
 		

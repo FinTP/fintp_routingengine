@@ -35,10 +35,10 @@ class RoutingState
 		RoutingState(){};
 		virtual ~RoutingState(){};
 	
-		virtual string ProcessMessage( RoutingMessage* message, const string& userId, bool bulk, const string& batchType ) = 0;
-		string ProcessMessage( RoutingMessage* message, const string& userId, bool bulk )
+		virtual string ProcessMessage( RoutingMessage* message, const int userId, bool bulk, const string& batchType ) = 0;
+		string ProcessMessage( RoutingMessage* message, const int userId, bool bulk )
 			{  return ProcessMessage( message, userId, bulk, "" ); }
-		string ProcessMessage( RoutingMessage* message, const string& userId )
+		string ProcessMessage( RoutingMessage* message, const int userId )
 			{  return ProcessMessage( message, userId, false, "" ); }
 };
 
@@ -74,7 +74,7 @@ class ExportedTestObject RoutingExitpoint : public RoutingState
 		RoutingExitpoint( const string& serviceName, long serviceId, const string& exitpointDefinition );
 		~RoutingExitpoint();
 		
-		string ProcessMessage( RoutingMessage* message, const string& userId, bool bulk, const string& batchType );
+		string ProcessMessage( RoutingMessage* message, const int userId, bool bulk, const string& batchType );
 		
 		void Commit( const bool isBatch, const string& batchId );
 		void Rollback( const bool isBatch );
@@ -121,7 +121,7 @@ class ExportedTestObject RoutingQueue : public RoutingState
 		RoutingQueue( const long queueId, const string& queueName, const string& serviceName, const long serviceId, const string& queueEP, const long holdStatus );
 		~RoutingQueue(){};
 		
-		string ProcessMessage( RoutingMessage* message, const string& userId, bool bulk, const string& batchType );
+		string ProcessMessage( RoutingMessage* message, const int userId, bool bulk, const string& batchType );
 		
 		// accessors 
 		bool getHeld() const { return m_HoldStatus; }

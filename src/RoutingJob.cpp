@@ -44,16 +44,16 @@ const string RoutingJob::PARAM_BATCHREF = "BatchRef";
 const string RoutingJob::PARAM_GROUPAMOUNT = "BatchSum";
 
 RoutingJob::RoutingJob() : m_BackoutCount( 0 ), m_DeferedQueue( 0 ),
-	m_JobId( "" ), m_RoutingPoint( "" ), m_Function( "" ), m_UserId( "" ), m_BatchId( "" ), m_BatchType( "" ),
+	m_JobId( "" ), m_RoutingPoint( "" ), m_Function( "" ), m_UserId( 0 ), m_BatchId( "" ), m_BatchType( "" ),
 	m_IsBatch( false ), m_BatchStatus( BatchManagerBase::BATCH_FAILED ),
 	m_HasUnhold( -1 ), m_IsMove( -1 ), m_IsRoute( -1 ), m_IsComplete( -1 ),
 	m_Destination( "?" ), m_IsParallel( true )
 {
 }
 
-RoutingJob::RoutingJob( const string& table, const string& jobId, const string& function, const string& userId ) : 
+RoutingJob::RoutingJob( const string& table, const string& jobId, const string& function, const int userId ) : 
 	m_BackoutCount( 0 ), m_DeferedQueue( 0 ),
-	m_JobId( jobId ), m_RoutingPoint( table ), m_Function( function ), m_UserId( userId ), m_BatchId( "" ), m_BatchType( "" ),
+	m_JobId( jobId ), m_RoutingPoint( table ), m_Function( function ), m_UserId( 0 ), m_BatchId( "" ), m_BatchType( "" ),
 	m_IsBatch( false ), m_BatchStatus( BatchManagerBase::BATCH_FAILED ),
 	m_HasUnhold( -1 ), m_IsMove( -1 ), m_IsRoute( -1 ), m_IsComplete( -1 ),
 	m_Destination( "?" ), m_IsParallel( true )
@@ -61,7 +61,7 @@ RoutingJob::RoutingJob( const string& table, const string& jobId, const string& 
 }
 
 RoutingJob::RoutingJob( const string& jobId ) : m_BackoutCount( 0 ), m_DeferedQueue( 0 ),
-	m_JobId( "" ), m_RoutingPoint( "" ), m_Function( "" ), m_UserId( "" ), m_BatchId( "" ), m_BatchType( "" ),
+	m_JobId( "" ), m_RoutingPoint( "" ), m_Function( "" ), m_UserId( 0 ), m_BatchId( "" ), m_BatchType( "" ),
 	m_IsBatch( false ), m_BatchStatus( BatchManagerBase::BATCH_FAILED ),
 	m_HasUnhold( -1 ), m_IsMove( -1 ), m_IsRoute( -1 ), m_IsComplete( -1 ),
 	m_Destination( "?" ), m_IsParallel( true )
@@ -101,7 +101,7 @@ void RoutingJob::ReadNextJob( const string& jobId )
 	m_JobId = "";
 	m_RoutingPoint = "";
 	m_Function = "";
-	m_UserId = "";
+	m_UserId = 0;
 	m_BatchId = "";
 	m_BatchType = "";
 	m_HasUnhold = -1;
@@ -135,7 +135,7 @@ void RoutingJob::ReadNextJob( const string& jobId )
 	
 		m_RoutingPoint = StringUtil::Trim( myDS->getCellValue( 0, "ROUTINGPOINT" )->getString() );
 		m_Function = StringUtil::Trim( myDS->getCellValue( 0, "FUNCTION" )->getString() );
-		m_UserId = StringUtil::Trim( myDS->getCellValue( 0, "USERID" )->getString() );
+		m_UserId = myDS->getCellValue( 0, "USERID" )->getInt();
 
 		// if we tried 3 times to undertake this job .. dump it
 		if ( m_BackoutCount > ROUTINGJOB_MAX_BACKOUT )

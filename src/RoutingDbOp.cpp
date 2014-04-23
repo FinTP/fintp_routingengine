@@ -1038,11 +1038,11 @@ void RoutingDbOp::UpdateBMAssembleResponder( const string& batchId, const string
 	data->ExecuteNonQueryCached( DataCommand::SP, "UpdateRMAssembleResponder", params );
 }
 
-void RoutingDbOp::UpdateBusinessMessageUserId( const string& correlationId, const string& userId )
+void RoutingDbOp::UpdateBusinessMessageUserId( const string& correlationId, const int userId )
 {
 	Database* data = getData();
 
-	if ( userId.length() == 0 )
+	if ( userId > 0 )
 	//if ( ( userId.length() <= 0 ) || ( userId == "-1" ) )
 	{
 		DEBUG_GLOBAL( "Business message userid for [" << correlationId << "] will not be updated [empty]" );
@@ -1059,9 +1059,8 @@ void RoutingDbOp::UpdateBusinessMessageUserId( const string& correlationId, cons
 	messageIdParam->setString( correlationId );
 	params.push_back( messageIdParam );
 	
-	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
-	userIdParam->setDimension( userId.length() );
-	userIdParam->setString( userId );
+	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
+	userIdParam->setInt( userId );
 	params.push_back( userIdParam );
 	
 	data->ExecuteNonQueryCached( DataCommand::SP, "UpdateRMUserId", params );
@@ -1113,13 +1112,13 @@ void RoutingDbOp::InsertBusinessMessage( const string& messageType, const string
 		
 	params.push_back( keywordsParam );
 
-	data->ExecuteNonQueryCached( DataCommand::SP, "InsertMessage", params );
+	data->ExecuteNonQuery( DataCommand::SP, "InsertMessage", params );
 }
 
 void RoutingDbOp::InsertBusinessMessage( const string& messageId, const string& correlationId, int crtQueue, const string& messageType,
 	const string& senderBIC, const string& receiverBIC, const string& currDate, const string& currType, const string& currAmmount,
 	const string& senderApp, const string& receiverApp, const string& trn, const string& relref, const string& mur, 
-	const string& iban, const string& ibanpl, const string& senderCorr, const string& receiverCorr, const string& userid,
+	const string& iban, const string& ibanpl, const string& senderCorr, const string& receiverCorr, const int userid,
 	const string& edToEdId, const string& orgInstrId, const string& orgTxId, const string& addMsgInf )
 {
 	Database* data = getData();
@@ -1241,9 +1240,8 @@ void RoutingDbOp::InsertBusinessMessage( const string& messageId, const string& 
 		params.push_back( rcorrParam );
 	}
 
-	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
-	userIdParam->setDimension( userid.length() );
-	userIdParam->setString( userid );
+	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
+	userIdParam->setInt( userid );
 	userIdParam->setName( "User ID" );
 	params.push_back( userIdParam );
 
@@ -1774,16 +1772,15 @@ DataSet* RoutingDbOp::GetBatchMessages( const string& batchId, const string& tab
 	return result;
 }
 
-DataSet* RoutingDbOp::GetBatchPart( const string& userId, const string& receiver, const int serviceId, const string& queue )
+DataSet* RoutingDbOp::GetBatchPart( const int userId, const string& receiver, const int serviceId, const string& queue )
 {
 	DEBUG( "Getting first 1000 messages in batch for [" << receiver << "]" );
 	
 	Database* data = getData();
 	
 	ParametersVector params;
-	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
-	userIdParam->setDimension( userId.length() );
-	userIdParam->setString( userId );
+	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
+	userIdParam->setInt( userId );
 	params.push_back( userIdParam );
 
 	DataParameterBase *receiverParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
@@ -1977,7 +1974,7 @@ void RoutingDbOp::RollbackJob( const string& jobId )
 	data->EndTransaction( TransactionType::COMMIT );
 }
 
-void RoutingDbOp::InsertJob( const string& jobId, const string& routingPoint, const string& function, const string& userId )
+void RoutingDbOp::InsertJob( const string& jobId, const string& routingPoint, const string& function, const int userId )
 {
 	Database* data = getData();
 
@@ -1999,15 +1996,14 @@ void RoutingDbOp::InsertJob( const string& jobId, const string& routingPoint, co
 	funcParam->setString( function );
 	params.push_back( funcParam );
 
-	DataParameterBase *useridParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
-	useridParam->setDimension( userId.length() );
-	useridParam->setString( userId );
+	DataParameterBase *useridParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
+	useridParam->setInt( userId );
 	params.push_back( useridParam );
 	
 	data->ExecuteNonQuery( DataCommand::SP, "qPIRoutingHelper", params );
 }
 
-void RoutingDbOp::DeferJob( const string& jobId, const long deferedQueue, const string& routingPoint, const string& function, const string& userId )
+void RoutingDbOp::DeferJob( const string& jobId, const long deferedQueue, const string& routingPoint, const string& function, const int userId )
 {
 	Database* data = getData();
 
@@ -2033,9 +2029,8 @@ void RoutingDbOp::DeferJob( const string& jobId, const long deferedQueue, const 
 	funcParam->setString( function );
 	params.push_back( funcParam );
 
-	DataParameterBase *useridParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
-	useridParam->setDimension( userId.length() );
-	useridParam->setString( userId );
+	DataParameterBase *useridParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
+	useridParam->setInt( userId );
 	params.push_back( useridParam );
 	
 	data->ExecuteNonQueryCached( DataCommand::SP, "DeferJob", params );
@@ -2125,7 +2120,7 @@ BatchManagerBase::BATCH_STATUS RoutingDbOp::BatchJob( const string& jobId, const
 }
 
 BatchManagerBase::BATCH_STATUS RoutingDbOp::GetBatchStatus( const string& batchId, const string& batchUID, string& comBatchId,
-	const string& userId, const unsigned long batchCount, const string& batchAmount, const long serviceId, const string& routingPoint )
+	const int userId, const unsigned long batchCount, const string& batchAmount, const long serviceId, const string& routingPoint )
 {
 	Database* data = getData();
 
@@ -2137,9 +2132,8 @@ BatchManagerBase::BATCH_STATUS RoutingDbOp::GetBatchStatus( const string& batchI
 	batchIdParam->setString( batchId );
 	params.push_back( batchIdParam );
 
-	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
-	userIdParam->setDimension( userId.length() );
-	userIdParam->setString( userId );
+	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
+	userIdParam->setInt( userId );
 	params.push_back( userIdParam );
 
 	DataParameterBase *batchCountParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
@@ -2311,7 +2305,7 @@ string RoutingDbOp::GetOriginalRef( const string& reference, const string& batch
 	return orgRef;
 }
 
-void RoutingDbOp::TerminateRapidBatch( const string& batchId, const string& userId, const string& tableName, const string& responder )
+void RoutingDbOp::TerminateRapidBatch( const string& batchId, const int userId, const string& tableName, const string& responder )
 {
 	Database* data = getData();
 
@@ -2323,9 +2317,8 @@ void RoutingDbOp::TerminateRapidBatch( const string& batchId, const string& user
 	batchIdParam->setString( batchId );
 	params.push_back( batchIdParam );
 
-	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );
-	userIdParam->setDimension( userId.length() );
-	userIdParam->setString( userId );
+	DataParameterBase *userIdParam = m_DatabaseProvider->createParameter( DataType::LONGINT_TYPE );
+	userIdParam->setInt( userId );
 	params.push_back( userIdParam );
 
 	DataParameterBase *responderParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE );

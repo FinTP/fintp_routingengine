@@ -87,7 +87,7 @@ class ExportedTestObject RoutingAction
 		RoutingAction( const string& text );
 
 		// perform the action
-		string Perform( RoutingMessage* message, const string& userId, bool bulk = false ) const;
+		string Perform( RoutingMessage* message, const int userId, bool bulk = false ) const;
 
 		string ToString() const;
 

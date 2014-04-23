@@ -199,7 +199,7 @@ RoutingExitpoint::~RoutingExitpoint()
 	}
 }
 
-string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& userId, bool bulk, const string& batchType )
+string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const int userId, bool bulk, const string& batchType )
 {
 	//DEBUG( "In process" );
 	//RoutingEngine::getMessagePool().Dump();
@@ -551,7 +551,7 @@ RoutingQueue::RoutingQueue( const long queueId, const string& queueName, const s
 	DEBUG( "Routing queue : [" << m_QueueName << "]" );
 }
 
-string RoutingQueue::ProcessMessage( RoutingMessage* message, const string& userId, bool bulk, const string& batchType )
+string RoutingQueue::ProcessMessage( RoutingMessage* message, const int userId, bool bulk, const string& batchType )
 {
 	bool isMessageBatch = ( ( message->getMessageOptions() & RoutingMessageOptions::MO_BATCH ) == RoutingMessageOptions::MO_BATCH );
 	bool isBatch = isMessageBatch || ( ( m_Exitpoint.getMessageOptions() & RoutingMessageOptions::MO_BATCH ) == RoutingMessageOptions::MO_BATCH );
@@ -752,9 +752,9 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const string& user
 						batchItem = *message;
 
 						// replace fields
-						string correlationId = StringUtil::Trim( batchItems->getCellValue( i, "QPIID" )->getString() );
-						string sequence = StringUtil::Trim( batchItems->getCellValue( i, "BATCHSEQ" )->getString() );
-						if ( noHeaders && ( sequence == "1" ) )
+						string correlationId = StringUtil::Trim( batchItems->getCellValue( i, RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID )->getString() );
+						int sequence = batchItems->getCellValue( i, "BATCHSEQ" )->getInt();
+						if ( noHeaders && ( sequence == 1 ) )
 						{
 							DEBUG( "Header skipped ( MO_NOHEADERS option set on exitpoint [" << message->getTableName() << "] )" );
 							continue;
@@ -997,8 +997,8 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const string& user
 				DEBUG( msgReport.str() );
 				AppException aex( msgReport.str(), ex, EventType::Error );
 				aex.setCorrelationId( message->getCorrelationId() );
-				if ( userId.length() > 0 )
-					aex.addAdditionalInfo( "UserId", userId );
+				if ( userId > 0 )
+					aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 				LogManager::Publish( aex );
 
 				if ( !m_BulkOperationInProgress ) 
@@ -1015,8 +1015,8 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const string& user
 				DEBUG( msgReport.str() );
 				AppException aex( msgReport.str(), EventType::Error );
 				aex.setCorrelationId( message->getCorrelationId() );
-				if ( userId.length() > 0 )
-					aex.addAdditionalInfo( "UserId", userId );
+				if ( userId > 0 )
+					aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 				LogManager::Publish( aex );
 
 				if ( !m_BulkOperationInProgress ) 

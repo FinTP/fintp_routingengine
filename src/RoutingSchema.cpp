@@ -708,7 +708,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 	bool isBulk = false;
 	bool needsIndividualAttn = false;
 	bool isDistinctAck = false;
-	string userId = job->getUserId();
+	int userId = job->getUserId();
 	string messageTable = job->getJobTable();
 	string itemFeedback = "";
 	string fullBatchId = "";
@@ -1061,7 +1061,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 bool RoutingSchema::RouteBatch( RoutingJob* job, RoutingMessage* theMessage, bool fastpath )
 {		
 	RoutingMessageEvaluator* evaluator = theMessage->getPayloadEvaluator();
-	string userId = job->getUserId();
+	int userId = job->getUserId();
 
 	//string passedBatchId = job->getFunctionParam( RoutingJob::PARAM_BATCHID ), mappedBatchId = "";
 	string passedBatchId = "", mappedBatchId = "", passedBatchUid = "";
@@ -1412,7 +1412,7 @@ bool RoutingSchema::RouteBatch( RoutingJob* job, RoutingMessage* theMessage, boo
 	}
 }
 
-bool RoutingSchema::ApplyPlanRouting( RoutingJob* job, RoutingMessage* theMessage, const RoutingPlan* plan, const string& userId, const bool isBulk, const bool fastpath ) const
+bool RoutingSchema::ApplyPlanRouting( RoutingJob* job, RoutingMessage* theMessage, const RoutingPlan* plan, const int userId, const bool isBulk, const bool fastpath ) const
 {
 	DEBUG( "Using plan routing for message in [" << theMessage->getTableName() << "]" );
 	const vector< RoutingRule >& rulesForPlan = plan->getRules();
@@ -1475,7 +1475,7 @@ bool RoutingSchema::ApplyPlanRouting( RoutingJob* job, RoutingMessage* theMessag
 	return true;
 }
 
-bool RoutingSchema::ApplyQueueRouting( RoutingJob* job, RoutingMessage* theMessage, const long queueId, const string& userId, const bool isBulk, const bool fastpath )
+bool RoutingSchema::ApplyQueueRouting( RoutingJob* job, RoutingMessage* theMessage, const long queueId, const int userId, const bool isBulk, const bool fastpath )
 {
 	const vector< RoutingRule > rulesForQueue = m_RulesByQueue[ queueId ];
 
@@ -1576,9 +1576,9 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage ( *messageProv
 	WorkItem< RoutingMessage > workMessage = RoutingEngine::getMessagePool().getPoolItem( job->getMessageId() );
 	RoutingMessage* theMessage = workMessage.get();
 	
-	string userId = job->getUserId();
+	int userId = job->getUserId();
 	
-	if ( ( userId.length() > 0 ) && !theMessage->isVirtual() )
+	if ( ( userId > 0 ) && !theMessage->isVirtual() )
 	//if ( ( userId.length() > 0 ) || ( userId == "-1" ) )
 	{
 		// this may fail on "raw" messages, but we should be able to continue
@@ -1605,7 +1605,7 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 		DEBUG( "Routing message [" << theMessage->getMessageId() << "] (no payload available)" );
 	}
 
-	string userId = job->getUserId();
+	int userId = job->getUserId();
 	bool isBulk = false;
 
 	theMessage->setUserId( userId );
@@ -2005,7 +2005,7 @@ void RoutingSchema::PerformInitRoutine( long schemaId )
 				if( queueIterator->second[ i ].getSchemaId() == schemaId )
 				{
 					DEBUG( "[" << queueIterator->second[ i ].getSchemaId() << "] Executing init rules for queue [" << queueIterator->first << "] ... " );
-					queueIterator->second[ i ].Route( &message, "" );
+					queueIterator->second[ i ].Route( &message, 0 );
 				}
 			} 
 			queueIterator++;
@@ -2069,7 +2069,7 @@ void RoutingSchema::PerformTearRoutine( long schemaId )
 				if( queueIterator->second[ i ].getSchemaId() == schemaId )
 				{
 					DEBUG( "[" << queueIterator->second[ i ].getSchemaId() << "] Executing tear rules for queue ["  << queueIterator->first << "] ... " );
-					queueIterator->second[ i ].Route( &message, "" );
+					queueIterator->second[ i ].Route( &message, 0 );
 				}
 			} 
 			queueIterator++;
@@ -2129,7 +2129,7 @@ bool RoutingSchema::RouteDelayedReply( RoutingJob* job, RoutingMessage* response
 {	
 	DEBUG( "Getting delayed messages" );
 	pthread_t selfId = pthread_self();
-	string userId = job->getUserId();
+	int userId = job->getUserId();
 	bool isFirstDelayedRouted = false;
 
 	// get individual messages from DelayedTFDQueue that match with MIR
@@ -2182,8 +2182,8 @@ bool RoutingSchema::RouteDelayedReply( RoutingJob* job, RoutingMessage* response
 					//publish event for every message in delayed queue
 					eventMessage << "Message routed from " << delayedReplyJob->getJobTable() << " to " << delayedReplyJob->getDestination();
 					AppException aex( eventMessage.str(), EventType::Info );
-					if ( userId.length() > 0 )
-						aex.addAdditionalInfo( "UserId", userId );
+					if ( userId > 0 )
+						aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 					delayedReplyJob->populateAddInfo( aex );
 					LogManager::Publish( aex );
 				}

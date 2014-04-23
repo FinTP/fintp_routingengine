@@ -109,25 +109,25 @@ class ExportedTestObject RoutingDbOp
 		static void CommitJob( const string& jobId, const bool isolate = true );
 		static void AbortJob( const string& jobId );
 		static void RollbackJob( const string& jobId );
-		static void DeferJob( const string& jobId, const long deferedQueue, const string& routingPoint, const string& function, const string& userId );
+		static void DeferJob( const string& jobId, const long deferedQueue, const string& routingPoint, const string& function, const int userId );
 		static void ResumeJobs( const long deferedQueue );
-		static void InsertJob( const string& jobId, const string& routingPoint, const string& function, const string& userId );
+		static void InsertJob( const string& jobId, const string& routingPoint, const string& function, const int userId );
 		//static void AddRoutingJob( const string routingPoint, const string routingKey, const string routingFunc );
 		
 		// batching
 		static BatchManagerBase::BATCH_STATUS BatchJob( const string& jobId, const string& sequence,
 			const string& batchId, const string& correlId, const string& feedback, const string& xformItem, const string& amountBDP, const string& amountADP );
-		static BatchManagerBase::BATCH_STATUS GetBatchStatus( const string& batchId, const string& batchUID, string& comBatchId, const string& userId, 
+		static BatchManagerBase::BATCH_STATUS GetBatchStatus( const string& batchId, const string& batchUID, string& comBatchId, const int userId, 
 			const unsigned long batchCount, const string& batchAmount, const long serviceId, const string& routingPoint );
 		static void UpdateBatchCode( const string& batchId, const string& code );
 
 		static void TerminateBatch( const string& batchId, const string& batchType, const BatchManagerBase::BATCH_STATUS status, const string& reason );
-		static void TerminateRapidBatch( const string& batchId, const string& userId, const string& tableName, const string& responder );
+		static void TerminateRapidBatch( const string& batchId, const int userId, const string& tableName, const string& responder );
 		//static DataSet* GetBatchJobs( const string batchId );
 		static unsigned long GetBatchCount( const string& batchId ){ return 0; }
 		static DataSet* GetBatchMessages( const string& batchId, const bool isReply, const string& issuer, int ddbtSettledReply = 0 );
 		static DataSet* GetBatchMessages( const string& batchId, const string& tableName, const string& spName = "GetMessagesInAssembly" );
-		static DataSet* GetBatchPart( const string& userId, const string& receiver, const int serviceId, const string& queue );
+		static DataSet* GetBatchPart( const int userId, const string& receiver, const int serviceId, const string& queue );
 		static void RemoveBatchMessages( const string& batchId, const string& tableName, const string& spName = "DeleteMessagesInAssembly" );
 		static void UpdateOriginalBatchMessages( const string& batchid, const string& code = RoutingMessageEvaluator::FEEDBACKFTP_REFUSE );
 		static string GetBatchType( const string& batchId, const string& tableName = "BATCHJOBS", const string& sender = "" );
@@ -157,10 +157,10 @@ class ExportedTestObject RoutingDbOp
 		static void InsertBusinessMessage( const string& messageId, const string& correlationId, int crtQueue, const string& messageType, 
 			const string& senderBIC, const string& receiverBIC, const string& currDate, const string& currType, const string& currAmmount,
 			const string& senderApp, const string& receiverApp, const string& trn, const string& relref, const string& mur, 
-			const string& iban, const string& ibanpl, const string& senderCorr, const string& receiverCorr, const string& userid,
+			const string& iban, const string& ibanpl, const string& senderCorr, const string& receiverCorr, const int userid,
 			const string& edToEdId, const string& orgInstrId, const string& orgTxId, const string& addMsgInf );
 		static void UpdateBusinessMessageResponder( const string& messageId, const string& receiverApp );
-		static void UpdateBusinessMessageUserId( const string& correlationId, const string& userId );
+		static void UpdateBusinessMessageUserId( const string& correlationId, const int userId );
 		static void UpdateBusinessMessageValueDate( const string& correlationId, const string& newDate );
 		static void UpdateBusinessMessageAck( const string& id, bool batch );
 		static void UpdateLiquidities( const string& correlationId );

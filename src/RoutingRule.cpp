@@ -111,7 +111,7 @@ RoutingRule::~RoutingRule()
 {
 }
 
-RoutingAction::ROUTING_ACTION RoutingRule::Route( RoutingMessage* message, string userId, bool bulk ) const
+RoutingAction::ROUTING_ACTION RoutingRule::Route( RoutingMessage* message, const int userId, bool bulk ) const
 {
 	const_cast< RoutingRule* >( this )->m_Outcome = "";
 
