@@ -207,7 +207,7 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const string& 
 	bool isBatch = isMessageBatch || ( ( m_MessageOptions & RoutingMessageOptions::MO_BATCH ) == RoutingMessageOptions::MO_BATCH );
 	bool mustInsertBatch = ( ( m_MessageOptions & RoutingMessageOptions::MO_INSERTBATCH ) == RoutingMessageOptions::MO_INSERTBATCH );
 
-	if( mustInsertBatch ) 
+	if( mustInsertBatch && !message->isReply() )
 	{
 		string messageNamespace = "";
 		RoutingMessageEvaluator* evaluator = message->getPayloadEvaluator();
