@@ -832,7 +832,6 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 				string correlationId = StringUtil::Trim( batchItems->getCellValue( i, "QPIID" )->getString() );
 				LogManager::setCorrelationId( correlationId );
 				
-				//long batchSequence = batchItems->getCellValue( i, "BATCHSEQ" )->getLong();
 				string trn = StringUtil::Trim( batchItems->getCellValue( i, "TRN" )->getString() );
 				string batchItemFeedback = "0";
 				if( ( evaluator->CheckPayloadType( RoutingMessageEvaluator::ACHCOREBLKDDBTRFL ) ) || ( evaluator->isOriginalIncomingMessage() ) )
@@ -853,7 +852,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 				// modified SP for RZB : GETMESSAGESINBATCH
 				bool noHeaders = false;
 
-				string batchItemSeq = StringUtil::Trim( batchItems->getCellValue( i, "BATCHSEQ" )->getString() );
+				long batchItemSeq = batchItems->getCellValue( i, "BATCHSEQ" )->getLong();
 				try
 				{
 					string originalRequestor = StringUtil::Trim( batchItems->getCellValue( i, "REQUESTOR" )->getString() );
@@ -872,7 +871,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 						batchItemFeedback = RoutingMessageEvaluator::FEEDBACKFTP_NOREACT;
 					}
 
-					if( ( batchItemSeq == "1" ) && ( ( messageOptions & RoutingMessageOptions::MO_NOHEADERS ) == RoutingMessageOptions::MO_NOHEADERS ) )
+					if( ( batchItemSeq == 1 ) && ( ( messageOptions & RoutingMessageOptions::MO_NOHEADERS ) == RoutingMessageOptions::MO_NOHEADERS ) )
 					{
 						DEBUG( "Header skipped ( MO_NOHEADERS option set on exitpoint [" << messageTable << "] )" );
 						continue;
@@ -1254,17 +1253,16 @@ bool RoutingSchema::RouteBatch( RoutingJob* job, RoutingMessage* theMessage, boo
 					{
 #endif
 						stringstream jobFunction;
-						string batchItemSeq = StringUtil::Trim( batchItems->getCellValue( i, "BATCHSEQ" )->getString() );
+						long batchSequence = batchItems->getCellValue( i, "BATCHSEQ" )->getLong();
 						string batchAmount = StringUtil::Trim( batchItems->getCellValue( 0, "BATCHAMOUNT" )->getString() );
 						jobFunction << "F=Route,F=Unhold,P=" << RoutingJob::PARAM_GROUPORDER << 
-							"(" << batchItemSeq << "),P=" << RoutingJob::PARAM_GROUPCOUNT << "(" << messagesInBatch << 
+							"(" << batchSequence << "),P=" << RoutingJob::PARAM_GROUPCOUNT << "(" << messagesInBatch << 
 							"),P=BatchID(" << batchId << "),P=" << RoutingJob::PARAM_GROUPAMOUNT << "(" << batchAmount <<
 							"),P=" << RoutingJob::PARAM_BATCHREF << "(" << batchRef << "),P=Fast(true)";
 						
 						m_RBatchMessages[i].setMessageOption( RoutingMessageOptions::MO_RBATCH );
 						m_RBatchMessages[i].setMessageOption( RoutingMessageOptions::MO_BATCH);
 						m_RBatchMessages[i].setBatchId( batchId );
-						unsigned long batchSequence = StringUtil::ParseULong( batchItemSeq );
 						m_RBatchMessages[i].setBatchSequence( batchSequence );
 						m_RBatchMessages[i].setBatchTotalAmount( batchAmount );
 						m_RBatchMessages[i].setBatchTotalCount( messagesInBatch );

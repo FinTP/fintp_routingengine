@@ -1060,7 +1060,6 @@ RoutingMessageEvaluator* RoutingMessage::getPayloadEvaluator( const bool forceRe
 			else
 				m_PayloadEvaluator->setKeywordMappings( mtFinder->second );
 
-			m_PayloadEvaluator->setKeywords( RoutingEngine::getRoutingKeywords() );
 			m_PayloadEvaluator->setIsoTypes( RoutingEngine::getRoutingIsoMessageType( messageType) );
 
 			if ( m_PayloadEvaluator->isBusinessFormat() )

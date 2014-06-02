@@ -351,7 +351,7 @@ int main( int argc, char** argv )
 		// manual override
 		if ( argc == 4 )
 		{
-			WorkItem< RoutingJob > workJob( new RoutingJob( argv[ 1 ], argv[ 2 ], argv[ 3 ], argv[ 4 ] ) );
+			WorkItem< RoutingJob > workJob( new RoutingJob( argv[ 1 ], argv[ 2 ], argv[ 3 ], StringUtil::ParseInt(argv[ 4 ]) ) );
 			RoutingJob* explicitJob = workJob.get();
 
 			DEBUG_GLOBAL( "Explicit route from queue [" << argv[ 1 ] << "] for message [" << argv[ 2 ] << "]. Applying function [" << argv[ 3 ] << "]" );

@@ -1003,7 +1003,7 @@ void* RoutingEngine::RouterRoutine( void* data )
 			
 			RoutingJob* job = workJob.get();
 
-			string userId = job->getUserId();
+			int userId = job->getUserId();
 			string jobId = job->getJobId();
 			string tableName = job->getJobTable();
 
@@ -1065,8 +1065,8 @@ void* RoutingEngine::RouterRoutine( void* data )
 				}
 
 				AppException aex( successMessage.str(), EventType::Info );
-				if ( userId.length() > 0 )
-					aex.addAdditionalInfo( "UserId", userId );
+				if ( userId > 0 )
+					aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 
 				job->populateAddInfo( aex );
 				LogManager::Publish( aex );
@@ -1106,8 +1106,8 @@ void* RoutingEngine::RouterRoutine( void* data )
 				TRACE_GLOBAL( "Message removed from pool" );
 
 				AppException aex( ex.getMessage(), ex );
-				if ( userId.length() > 0 )
-					aex.addAdditionalInfo( "UserId", userId );
+				if ( userId > 0 )
+					aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 
 				job->populateAddInfo( aex );
 				LogManager::Publish( aex );
@@ -1142,9 +1142,9 @@ void* RoutingEngine::RouterRoutine( void* data )
 				stringstream errorMessage;
 				errorMessage << "An exception has occured during routing [" << typeid( ex ).name() << " - " << ex.getMessage() << "]";
 				AppException aex( errorMessage.str(), ex );
+				if ( userId > 0 )
+					aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 
-				if ( userId.length() > 0 )
-					aex.addAdditionalInfo( "UserId", userId );
 				job->populateAddInfo( aex );
 				LogManager::Publish( aex );
 				
@@ -1178,8 +1178,8 @@ void* RoutingEngine::RouterRoutine( void* data )
 				stringstream errorMessage;
 				errorMessage << "An exception has occured during routing [" << typeid( ex ).name() << " - " << ex.what() << "]";
 				AppException aex( errorMessage.str(), ex );
-				if ( userId.length() > 0 )
-					aex.addAdditionalInfo( "UserId", userId );
+				if ( userId > 0 )
+					aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 					
 				job->populateAddInfo( aex );
 				LogManager::Publish( aex );
@@ -1195,8 +1195,8 @@ void* RoutingEngine::RouterRoutine( void* data )
 				RoutingEngine::getMessagePool().erasePoolItem( jobId, false );
 
 				AppException aex( "An exception has occured during routing [unknown error]" );
-				if ( userId.length() > 0 )
-					aex.addAdditionalInfo( "UserId", userId );
+				if ( userId > 0 )
+					aex.addAdditionalInfo( "UserId", StringUtil::ToString( userId ) );
 
 				job->populateAddInfo( aex );
 				LogManager::Publish( aex );
