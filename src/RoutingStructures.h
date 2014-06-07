@@ -76,7 +76,7 @@ class ExportedTestObject RoutingExitpoint : public RoutingState
 		
 		string ProcessMessage( RoutingMessage* message, const int userId, bool bulk, const string& batchType );
 		
-		void Commit( const bool isBatch, const string& batchId );
+		void Commit( const string& batchId );
 		void Rollback( const bool isBatch );
 
 		bool isValid() const { return ( m_Queue.size() > 0 ); }

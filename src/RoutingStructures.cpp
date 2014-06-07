@@ -499,26 +499,19 @@ string RoutingExitpoint::ProcessMessage( RoutingMessage* message, const int user
 	return "";
 }
 
-void RoutingExitpoint::Commit( const bool isBatch, const string& batchId  )
+void RoutingExitpoint::Commit( const string& batchId  )
 {
-	if ( !isBatch )
+	if ( m_TransportHelper != NULL )
 	{
-		if ( m_TransportHelper != NULL )
-			m_TransportHelper->commit();
+		DEBUG( "Commit transport helper" )
+		m_TransportHelper->commit();
 	}
-	else
+
+	if ( m_BatchManager != NULL )
 	{
-		// HACK : commit he batch at every message instead at every id unmap 
-		if ( m_BatchManager != NULL )
-		{
-			DEBUG( "Commit batch manager" );
-			m_BatchManager->commit();
-			m_BatchManager->close( batchId );
-		}
-		else
-		{
-			TRACE( "Batch manager does not exist" );
-		}
+		DEBUG( "Commit batch manager" );
+		m_BatchManager->commit();
+		m_BatchManager->close( batchId );
 	}
 }
 
@@ -592,7 +585,7 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const int userId, 
 				{
 					for( unsigned int i=0; i<batchItems->size(); i++ )
 					{
-						string correlationId = StringUtil::Trim( batchItems->getCellValue( i, "QPIID" )->getString() );
+						string correlationId = StringUtil::Trim( batchItems->getCellValue( i, "CORRELID" )->getString() );
 
 						// set mq id for request
 						RoutingAggregationCode request( RoutingMessageEvaluator::AGGREGATIONTOKEN_FTPID, correlationId );
@@ -918,7 +911,7 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const int userId, 
 			//RoutingEngine::getMessagePool().Dump();
 			
 			DEBUG( "Commiting batch ... message options [" << isMessageBatch << "] ep options [" << isBatch << "]" );
-			m_Exitpoint.Commit( true, message->getBatchId() );
+			m_Exitpoint.Commit( message->getBatchId() );
 
 			if ( isReply )
 			{
@@ -987,7 +980,7 @@ string RoutingQueue::ProcessMessage( RoutingMessage* message, const int userId, 
 					}
 
 					// commit put to MQ
-					m_Exitpoint.Commit( isBatch, message->getBatchId() );
+					m_Exitpoint.Commit( message->getBatchId() );
 				}
 			}
 			catch( const std::exception& ex )
