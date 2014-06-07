@@ -829,7 +829,7 @@ bool RoutingSchema::RouteBatchReply( RoutingJob* job, RoutingMessage* theMessage
 
 			for( unsigned int i=0; i<batchItems->size(); i++ )
 			{
-				string correlationId = StringUtil::Trim( batchItems->getCellValue( i, "QPIID" )->getString() );
+				string correlationId = StringUtil::Trim( batchItems->getCellValue( i, "CORRELID" )->getString() );
 				LogManager::setCorrelationId( correlationId );
 				
 				string trn = StringUtil::Trim( batchItems->getCellValue( i, "TRN" )->getString() );
