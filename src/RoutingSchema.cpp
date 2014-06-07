@@ -1665,29 +1665,8 @@ void RoutingSchema::ApplyRouting( RoutingJob* job, RoutingMessage* theMessage, R
 		// perform move
 		RoutingAction actionMove( RoutingAction::MOVETO, destination );
 		string outcome = "";
-		try
-		{
-			outcome = actionMove.Perform( theMessage, userId );
-		}
-		catch( const DBErrorException& ex )
-		{
-			// check if this is a trigger violation ( move to a triggered queue violates the unique constrain in routing jobs )
-			if ( ex.code() == "ORA-1" )
-			{
-				TRACE( "Unique constraint violated. Attempting to commit job before retrying..." );
 
-				// run this commit in the same transaction
-				// TODO This is not very good ( the job will remain in routingjobs if the transaction is rolledback,
-				// but the message will be rolled back )
-				RoutingDbOp::CommitJob( theMessage->getMessageId(), false );
-				outcome = actionMove.Perform( theMessage, userId );
-			}
-			else
-			{
-				TRACE( "Unknown error code received while moving the message [" << ex.code() << "]" );
-				throw;
-			}
-		}
+		outcome = actionMove.Perform( theMessage, userId );
 
 		if ( outcome.length() > 0 )
 			job->addAction( outcome );
