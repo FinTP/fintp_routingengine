@@ -310,6 +310,7 @@ void RoutingEngine::Start( bool startWatcher )
 	// read application settings
 	ReadApplicationSettings();
 
+	RoutingMessageEvaluator::setGetOriginalRefFunction( &RoutingDbOp::GetOriginalRef );
 	RoutingMessageEvaluator::setGetBatchTypeFunction( &RoutingDbOp::GetBatchType );
 	RoutingMessageEvaluator::ReadEvaluators( GlobalSettings["PluginLocation"]  );
 
