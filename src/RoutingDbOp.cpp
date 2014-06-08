@@ -477,7 +477,7 @@ void RoutingDbOp::InsertRoutingMessage( const string& tableName, const string& m
 	queueNameParam->setString( tableName );
 	params.push_back( queueNameParam );
 		
-	data->ExecuteNonQueryCached( DataCommand::SP, "InsertRoutingMessage", params );
+	data->ExecuteNonQueryCached( DataCommand::SP, "insertmessageinqueue", params );
 }
 
 void RoutingDbOp::UpdateRoutingMessage( const string& tableName, const string& messageId, const string& payload, const string& batchId, 
@@ -863,7 +863,7 @@ string RoutingDbOp::GetOriginalMessageId( const string& correlationId )
 	correlIdParam->setString( correlationId );
 	params.push_back( correlIdParam );
 	
-	DataParameterBase *msgIdParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE, DataParameterBase::PARAM_IN );
+	DataParameterBase *msgIdParam = m_DatabaseProvider->createParameter( DataType::CHAR_TYPE, DataParameterBase::PARAM_OUT );
 	msgIdParam->setDimension( 26 );
 	params.push_back( msgIdParam );
 
@@ -991,7 +991,7 @@ void RoutingDbOp::UpdateBusinessMessageValueDate( const string& correlationId, c
 	dateParam->setName( "ValueDate" );
 	params.push_back( dateParam );
 	
-	data->ExecuteNonQueryCached( DataCommand::SP, "UpdateBMValueDate", params );
+	data->ExecuteNonQueryCached( DataCommand::SP, "UpdateRMValueDate", params );
 }
 
 void RoutingDbOp::UpdateBusinessMessageResponder( const string& messageId, const string& receiverApp )
@@ -1666,7 +1666,7 @@ bool RoutingDbOp::UpdateAggregationRequest( const string& aggregationTable, cons
 			throw;
 	}
 	
-	if( data->getLastUpdateCount() == 0 )
+	if( data->getLastNumberofAffectedRows() == 0 )
 	{
 		// update succeded but no rows updated
 		// statement executed, but no data was retrieved, or another warning
@@ -1860,7 +1860,7 @@ DataSet* RoutingDbOp::GetBatchMessages( const string& batchId, const bool isRepl
 			switch ( batchItemsType )
 			{
 				case DD_Ref_Reply :
-					result = data->ExecuteQueryCached( DataCommand::SP, "GetMessagesInBatchDD", params );
+					result = data->ExecuteQueryCached( DataCommand::SP, "GetMessagesInBatchRFD", params );
 					break;
 				case Batch_Items :
 					result = data->ExecuteQueryCached( DataCommand::SP, "GetMessagesInBatch", params );
@@ -2199,23 +2199,11 @@ string RoutingDbOp::GetBatchType( const string& batchId, const string& tableName
 	batchTypeParam->setDimension( 50 );
 	params.push_back( batchTypeParam );
 
-	string batchType = "";
-	try
-	{
-		data->ExecuteNonQueryCached( DataCommand::SP, "GetBatchType", params );
-		batchType = StringUtil::Trim( batchTypeParam->getString() );
-	}
-	catch( const DBErrorException& ex )
-	{
-		// "known failure case" : batch not found
-		if ( ex.code() == "ORA-20001" )
-			throw RoutingExceptionAggregationFailure( "BATCHID", batchId );
-		
-		TRACE( ex.getMessage() );
-		throw;
-	}
+	data->ExecuteNonQueryCached( DataCommand::SP, "GetBatchType", params );
+	if ( batchTypeParam->isNULLValue() )
+		throw RoutingExceptionAggregationFailure( "BATCHID", batchId );
 
-	return batchType;
+	return StringUtil::Trim( batchTypeParam->getString() );
 }
 
 void RoutingDbOp::UpdateBatchCode( const string& batchId, const string& code )
@@ -2260,23 +2248,7 @@ void RoutingDbOp::InsertIncomingBatch( const string& batchId, const string& mess
 	messageNspParam->setString( messageNamespace );
 	params.push_back( messageNspParam );
 
-	try
-	{
-		data->ExecuteNonQueryCached( DataCommand::SP, "InsertIncomingBatch", params );
-	}
-	catch( const DBErrorException& ex )
-	{
-		// "known failure case" : primary key violation
-		if ( ex.code() == "ORA-1" )
-		{
-			TRACE( "Primary key violation. the batch = [" << batchId << "] is already in table" );
-		}
-		else 
-		{
-			TRACE( ex.getMessage() );
-			throw;
-		}
-	}
+	data->ExecuteNonQueryCached( DataCommand::SP, "InsertIncomingBatch", params );
 }
 
 string RoutingDbOp::GetOriginalRef( const string& reference, const string& batchId )
