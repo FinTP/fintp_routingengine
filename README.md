@@ -20,7 +20,16 @@ See [Getting Started](http://www.fintp.org/getting-started/) to build and instal
 
 Building
 -----
-See [Build Instructions](https://github.com/FinTP/fintp_routingengine/wiki/Build-instructions) for steps required to build a fintp connector.
+- On Unix-like systems, **fintp_routingengine** uses the GNU Build System (Autotools) so we first need to generate the configuration script using:
+
+
+        autoreconf -fi
+Now we must run:
+
+        ./configure
+        make
+
+- For Windows, a Visual Studio 2010 solution is provided.
 
 Installation
 -----
